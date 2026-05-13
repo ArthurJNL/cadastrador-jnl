@@ -80,15 +80,16 @@ st.markdown("#### 🎯 Score e Considerações")
 col6, col7 = st.columns([1, 3])
 
 with col6:
-    score = st.number_input("Score (0 a 1000)", min_value=0, max_value=1000, value=0, step=10)
+    # Aumentei o passo (step) para 1, para o senhor ver a barra a mexer ponto a ponto!
+    score = st.number_input("Score (0 a 1000)", min_value=0, max_value=1000, value=500, step=1)
 
 with col7:
     consideracoes = st.text_area("Considerações finais", placeholder="Ex: Cadastro aprovado...")
 
 # ==========================================
-# MOTOR (CHANCE DE APROVAÇÃO) - NOVA HIERARQUIA
+# MOTOR (CHANCE DE APROVAÇÃO) - MATEMÁTICA CONTÍNUA
 # ==========================================
-chance = 40 # Começamos com uma base mais dura de aprovação
+chance = 40 # Base rígida inicial
 
 # 1. PRIORIDADE MÁXIMA: Notas Fiscais
 if notas_fiscais in ["Enviou", "Já temos"]: 
@@ -96,13 +97,15 @@ if notas_fiscais in ["Enviou", "Já temos"]:
     if cobertura_notas == "As notas cobrem o valor e são faturadas": chance += 10
     else: chance -= 10
 else: 
-    chance -= 25 # Penalidade massiva se não tiver faturamento comprovado
+    chance -= 25 # Penalidade forte sem comprovação de faturamento
 
-# 2. SEGUNDA PRIORIDADE: Score Serasa
-if score >= 750: chance += 15 # Excelente pagador
-elif score >= 500: chance += 5 # Pagador razoável
-elif score < 300: chance -= 20 # Risco altíssimo
-else: chance += 0 # Zona neutra (300 a 499)
+# 2. SEGUNDA PRIORIDADE: Score Serasa (MOTOR CONTÍNUO)
+# Se Score = 500 -> Impacto 0 (Neutro)
+# Se Score = 1000 -> Impacto +20
+# Se Score = 0 -> Impacto -20
+# Cada ponto conta na balança!
+impacto_score = (score - 500) * (20 / 500)
+chance += impacto_score
 
 # 3. TERCEIRA PRIORIDADE: Pendências
 if tem_pendencia == "Não": chance += 10
@@ -110,13 +113,13 @@ else: chance -= 15
 
 # 4. QUARTA PRIORIDADE: Contrato Social
 if contrato_social in ["Enviou", "Já temos"]: chance += 5 
-else: chance -= 5 # Formalidade faltando
+else: chance -= 5 # Penalidade leve
 
 # Bônus por Documentos Extras
 if doc_excedentes.strip(): chance += 5
 
-# Travar percentagem entre 0 e 100
-chance_final = max(0, min(100, chance))
+# Travar percentagem entre 0 e 100 e arredondar para número inteiro
+chance_final = int(max(0, min(100, chance)))
 
 st.markdown("---")
 st.markdown("### 📊 Termômetro de Aprovação")
@@ -160,7 +163,7 @@ else:
     if detalhe_pendencia:
         txt_pendencias += f" ({detalhe_pendencia})"
 
-# 3. Espaçamento de linhas (1 linha vazia entre tópicos)
+# 3. Espaçamento de linhas exato
 linhas_email = []
 linhas_email.append(f"{destinatario}, {saudacao}! Espero que esteja bem.")
 linhas_email.append("Segue análise de crédito para aprovação.")
