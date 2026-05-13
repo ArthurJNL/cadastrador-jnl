@@ -126,7 +126,7 @@ st.markdown("### 📊 Termômetro de Aprovação")
 st.progress(chance_final / 100.0)
 
 if chance_final >= 75:
-    st.markdown(f"<p class='chance-alta'>🔥 Chance Alta: {chance_final}%</p>", unsafe_allow_html=True)
+    st.markdown(f"<p class='chance-alta'>✅ Chance Alta: {chance_final}%</p>", unsafe_allow_html=True)
 elif chance_final >= 40:
     st.markdown(f"<p class='chance-media'>⚠️ Chance Média: {chance_final}% (Requer atenção)</p>", unsafe_allow_html=True)
 else:
