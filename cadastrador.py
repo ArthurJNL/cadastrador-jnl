@@ -2,8 +2,8 @@ import streamlit as st
 import urllib.parse
 from datetime import datetime
 
-# 1. SETUP DA PÁGINA
-st.set_page_config(page_title="Gerador de Análise de Crédito", page_icon="💳", layout="centered")
+# 1. SETUP DA PÁGINA (Ícone alterado para Boleto/Fatura)
+st.set_page_config(page_title="Gerador de Análise de Crédito", page_icon="🧾", layout="centered")
 
 # --- DESIGN PREMIUM CLEAN ---
 st.markdown("""
@@ -19,7 +19,7 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-st.title("💳 Análise de Crédito JNL")
+st.title("🧾 Análise de Crédito JNL")
 st.markdown("Preencha os dados e deixe a inteligência calcular as chances e gerar o relatório limpo.")
 st.markdown("---")
 
@@ -90,12 +90,16 @@ with col7:
 # ==========================================
 chance = 50 
 
-# Cálculos da Documentação
-if contrato_social in ["Enviou", "Já temos"]: chance += 10
-else: chance -= 15
+# Cálculos da Documentação (PESOS AJUSTADOS PELO COMANDANTE)
+if notas_fiscais in ["Enviou", "Já temos"]: 
+    chance += 10 # Prioridade Máxima
+else: 
+    chance -= 15 # Penalidade forte se não tiver faturamento comprovado
 
-if notas_fiscais in ["Enviou", "Já temos"]: chance += 10
-else: chance -= 15
+if contrato_social in ["Enviou", "Já temos"]: 
+    chance += 7 # Formalidade Importante
+else: 
+    chance -= 7 # Penalidade leve, pode ser cobrado depois
 
 if notas_fiscais in ["Enviou", "Já temos"]:
     if cobertura_notas == "As notas cobrem o valor e são faturadas": chance += 10
