@@ -2,10 +2,10 @@ import streamlit as st
 import urllib.parse
 from datetime import datetime
 
-# 1. SETUP DA PÁGINA (Ícone alterado para Boleto/Fatura)
+# 1. SETUP DA PÁGINA
 st.set_page_config(page_title="Gerador de Análise de Crédito", page_icon="🧾", layout="centered")
 
-# --- DESIGN PREMIUM CLEAN ---
+# --- DESIGN ---
 st.markdown("""
     <style>
     html, body, [class*="css"] { font-family: 'Calibri', sans-serif; }
@@ -20,7 +20,7 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 st.title("🧾 Análise de Crédito JNL")
-st.markdown("Preencha os dados e deixe a inteligência calcular as chances e gerar o relatório limpo.")
+st.markdown("Preencha os dados e deixe-me calcular as chances e gerar o relatório.")
 st.markdown("---")
 
 # 2. DEFINIÇÃO DA SAUDAÇÃO AUTOMÁTICA
@@ -39,7 +39,7 @@ col1, col2 = st.columns(2)
 with col1:
     tipo_cliente = st.selectbox("Tipo de Solicitação", ["Cliente novo", "Renovação", "Aumento de limite"])
 with col2:
-    valor_compra = st.text_input("Valor da Compra (R$)", placeholder="Ex: 9.500,00")
+    valor_compra = st.text_input("Valor da Compra (R$)", placeholder="Ex: 1.000,00")
 
 st.markdown("#### 📁 Documentação de Prioridade")
 col_doc1, col_doc2 = st.columns(2)
@@ -53,7 +53,7 @@ cobertura_notas = ""
 if notas_fiscais in ["Enviou", "Já temos"]:
     cobertura_notas = st.radio("Sobre a Cobertura das Notas:", [
         "As notas cobrem o valor e são faturadas", 
-        "As notas NÃO cobrem o valor da compra"
+        "As notas não cobrem o valor da compra"
     ])
 
 # Documentos extras para casos em que mandam coisas diferentes
@@ -73,8 +73,8 @@ with col4:
 
 with col5:
     if tem_pendencia == "Sim":
-        valor_pendencia = st.text_input("Valor da(s) pendência(s) (R$)", placeholder="Ex: 34,37")
-        detalhe_pendencia = st.text_input("Detalhes", placeholder="Ex: Protesto da KALUNGA")
+        valor_pendencia = st.text_input("Valor da(s) pendência(s) (R$)", placeholder="Ex: 100,00")
+        detalhe_pendencia = st.text_input("Detalhes", placeholder="Ex: Protesto de telefônica")
 
 st.markdown("#### 🎯 Score e Considerações")
 col6, col7 = st.columns([1, 3])
@@ -83,14 +83,14 @@ with col6:
     score = st.number_input("Score (0 a 1000)", min_value=0, max_value=1000, value=0, step=10)
 
 with col7:
-    consideracoes = st.text_area("Considerações finais", placeholder="Ex: Cadastro não aprovado...")
+    consideracoes = st.text_area("Considerações finais", placeholder="Ex: Cadastro aprovado...")
 
 # ==========================================
-# MOTOR DE INTELIGÊNCIA (CHANCE DE APROVAÇÃO)
+# MOTOR (CHANCE DE APROVAÇÃO)
 # ==========================================
 chance = 50 
 
-# Cálculos da Documentação (PESOS AJUSTADOS PELO COMANDANTE)
+# Cálculos da Documentação
 if notas_fiscais in ["Enviou", "Já temos"]: 
     chance += 10 # Prioridade Máxima
 else: 
@@ -131,7 +131,7 @@ else:
     st.markdown(f"<p class='chance-baixa'>🛑 Chance Baixa: {chance_final}% (Risco elevado)</p>", unsafe_allow_html=True)
 
 # ==========================================
-# MONTAGEM DO E-MAIL (O NOVO PADRÃO DE ESPAÇAMENTO)
+# MONTAGEM DO E-MAIL
 # ==========================================
 
 # 1. Lógica dos Documentos Principais combinados
@@ -161,7 +161,7 @@ else:
     if detalhe_pendencia:
         txt_pendencias += f" ({detalhe_pendencia})"
 
-# 3. Montando a estrutura final em blocos para garantir 1 linha branca entre eles
+# 3. Espaçamento de linhas
 linhas_email = []
 linhas_email.append(f"{destinatario}, {saudacao}! Espero que esteja bem.")
 linhas_email.append("Segue análise de crédito para aprovação.")
