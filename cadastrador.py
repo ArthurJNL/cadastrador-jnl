@@ -86,35 +86,34 @@ with col7:
     consideracoes = st.text_area("Considerações finais", placeholder="Ex: Cadastro aprovado...")
 
 # ==========================================
-# MOTOR (CHANCE DE APROVAÇÃO)
+# MOTOR (CHANCE DE APROVAÇÃO) - NOVA HIERARQUIA
 # ==========================================
-chance = 50 
+chance = 40 # Começamos com uma base mais dura de aprovação
 
-# Cálculos da Documentação
+# 1. PRIORIDADE MÁXIMA: Notas Fiscais
 if notas_fiscais in ["Enviou", "Já temos"]: 
-    chance += 10 # Prioridade Máxima
-else: 
-    chance -= 15 # Penalidade forte se não tiver faturamento comprovado
-
-if contrato_social in ["Enviou", "Já temos"]: 
-    chance += 7 # Formalidade Importante
-else: 
-    chance -= 7 # Penalidade leve, pode ser cobrado depois
-
-if notas_fiscais in ["Enviou", "Já temos"]:
+    chance += 15 
     if cobertura_notas == "As notas cobrem o valor e são faturadas": chance += 10
     else: chance -= 10
+else: 
+    chance -= 25 # Penalidade massiva se não tiver faturamento comprovado
 
+# 2. SEGUNDA PRIORIDADE: Score Serasa
+if score >= 750: chance += 15 # Excelente pagador
+elif score >= 500: chance += 5 # Pagador razoável
+elif score < 300: chance -= 20 # Risco altíssimo
+else: chance += 0 # Zona neutra (300 a 499)
+
+# 3. TERCEIRA PRIORIDADE: Pendências
+if tem_pendencia == "Não": chance += 10
+else: chance -= 15
+
+# 4. QUARTA PRIORIDADE: Contrato Social
+if contrato_social in ["Enviou", "Já temos"]: chance += 5 
+else: chance -= 5 # Formalidade faltando
+
+# Bônus por Documentos Extras
 if doc_excedentes.strip(): chance += 5
-
-# Cálculos de Pendências
-if tem_pendencia == "Não": chance += 20
-else: chance -= 20
-
-# Cálculos de Score
-if score >= 700: chance += 20
-elif score >= 500: chance += 5
-elif score < 300: chance -= 15
 
 # Travar percentagem entre 0 e 100
 chance_final = max(0, min(100, chance))
@@ -161,7 +160,7 @@ else:
     if detalhe_pendencia:
         txt_pendencias += f" ({detalhe_pendencia})"
 
-# 3. Espaçamento de linhas
+# 3. Espaçamento de linhas (1 linha vazia entre tópicos)
 linhas_email = []
 linhas_email.append(f"{destinatario}, {saudacao}! Espero que esteja bem.")
 linhas_email.append("Segue análise de crédito para aprovação.")
