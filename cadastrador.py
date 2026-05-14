@@ -19,6 +19,21 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
+# ==========================================
+# BARRA LATERAL: INJETOR DE ASSINATURA
+# ==========================================
+with st.sidebar:
+    st.markdown("### 🖋️ Assinatura Automática")
+    st.markdown("*(O botão do Outlook apaga a assinatura nativa, então injetamos esta no lugar)*")
+    
+    assinatura_padrao = """Atenciosamente,
+
+Arthur Klein de Oliveira
+Administrativo e Financeiro
+JNL Importadora e Distribuidora LTDA"""
+    
+    assinatura_injetada = st.text_area("Editar Assinatura:", value=assinatura_padrao, height=200)
+
 st.title("🧾 Análise de Crédito JNL")
 st.markdown("Preencha os dados e deixe-me calcular as chances e gerar o relatório.")
 st.markdown("---")
@@ -56,7 +71,7 @@ if notas_fiscais in ["Enviou", "Já temos"]:
         "As notas não cobrem o valor da compra"
     ])
 
-# Documentos extras para casos em que mandam coisas diferentes
+# Documentos extras
 doc_excedentes = st.text_input("Documentos Excedentes (Opcional)", placeholder="Ex: Enviou declaração de faturamento no lugar das notas")
 
 st.markdown("#### 🚨 Análise SPC / Serasa")
@@ -73,23 +88,33 @@ with col4:
 
 with col5:
     if tem_pendencia == "Sim":
-        valor_pendencia = st.text_input("Valor da(s) pendência(s) (R$)", placeholder="Ex: 100,00")
+        valor_pendencia = st.text_input("Valor total da(s) pendência(s) (R$)", placeholder="Ex: 100,00")
         detalhe_pendencia = st.text_input("Detalhes", placeholder="Ex: Protesto de telefônica")
+    else:
+        valor_pendencia = ""
 
 st.markdown("#### 🎯 Score e Considerações")
 col6, col7 = st.columns([1, 3])
 
 with col6:
-    # Aumentei o passo (step) para 1, para o senhor ver a barra a mexer ponto a ponto!
     score = st.number_input("Score (0 a 1000)", min_value=0, max_value=1000, value=500, step=1)
 
 with col7:
     consideracoes = st.text_area("Considerações finais", placeholder="Ex: Cadastro aprovado...")
 
 # ==========================================
-# MOTOR (CHANCE DE APROVAÇÃO) - MATEMÁTICA CONTÍNUA
+# MOTOR (CHANCE DE APROVAÇÃO) - MÁXIMA PRECISÃO
 # ==========================================
-chance = 40 # Base rígida inicial
+chance = 40 
+
+# Leitura Matemática do Valor da Pendência
+valor_pendencia_float = 0.0
+if tem_pendencia == "Sim" and valor_pendencia:
+    v_str = str(valor_pendencia).replace('R$', '').replace(' ', '')
+    if ',' in v_str and '.' in v_str: v_str = v_str.replace('.', '').replace(',', '.')
+    elif ',' in v_str: v_str = v_str.replace(',', '.')
+    try: valor_pendencia_float = float(v_str)
+    except: valor_pendencia_float = 0.0
 
 # 1. PRIORIDADE MÁXIMA: Notas Fiscais
 if notas_fiscais in ["Enviou", "Já temos"]: 
@@ -97,28 +122,29 @@ if notas_fiscais in ["Enviou", "Já temos"]:
     if cobertura_notas == "As notas cobrem o valor e são faturadas": chance += 10
     else: chance -= 10
 else: 
-    chance -= 25 # Penalidade forte sem comprovação de faturamento
+    chance -= 25 
 
-# 2. SEGUNDA PRIORIDADE: Score Serasa (MOTOR CONTÍNUO)
-# Se Score = 500 -> Impacto 0 (Neutro)
-# Se Score = 1000 -> Impacto +20
-# Se Score = 0 -> Impacto -20
-# Cada ponto conta na balança!
+# 2. SEGUNDA PRIORIDADE: Score Serasa (Contínuo)
 impacto_score = (score - 500) * (20 / 500)
 chance += impacto_score
 
-# 3. TERCEIRA PRIORIDADE: Pendências
-if tem_pendencia == "Não": chance += 10
-else: chance -= 15
+# 3. TERCEIRA PRIORIDADE: Pendências (Com Régua de Valor)
+if tem_pendencia == "Não": 
+    chance += 10
+else: 
+    if valor_pendencia_float <= 100: chance -= 5   # Dívida irrisória
+    elif valor_pendencia_float <= 1000: chance -= 15 # Dívida média
+    elif valor_pendencia_float <= 5000: chance -= 25 # Dívida alta
+    else: chance -= 40 # Dívida crítica (acima de 5K)
 
 # 4. QUARTA PRIORIDADE: Contrato Social
 if contrato_social in ["Enviou", "Já temos"]: chance += 5 
-else: chance -= 5 # Penalidade leve
+else: chance -= 5 
 
 # Bônus por Documentos Extras
 if doc_excedentes.strip(): chance += 5
 
-# Travar percentagem entre 0 e 100 e arredondar para número inteiro
+# Travar percentagem entre 0 e 100
 chance_final = int(max(0, min(100, chance)))
 
 st.markdown("---")
@@ -126,7 +152,7 @@ st.markdown("### 📊 Termômetro de Aprovação")
 st.progress(chance_final / 100.0)
 
 if chance_final >= 75:
-    st.markdown(f"<p class='chance-alta'>✅ Chance Alta: {chance_final}%</p>", unsafe_allow_html=True)
+    st.markdown(f"<p class='chance-alta'>🔥 Chance Alta: {chance_final}%</p>", unsafe_allow_html=True)
 elif chance_final >= 40:
     st.markdown(f"<p class='chance-media'>⚠️ Chance Média: {chance_final}% (Requer atenção)</p>", unsafe_allow_html=True)
 else:
@@ -137,31 +163,24 @@ else:
 # ==========================================
 
 # 1. Lógica dos Documentos Principais combinados
-if contrato_social == "Enviou" and notas_fiscais == "Enviou":
-    txt_docs = "Mandou todos os documentos"
-elif contrato_social == "Já temos" and notas_fiscais == "Já temos":
-    txt_docs = "Temos todos os documentos"
+if contrato_social == "Enviou" and notas_fiscais == "Enviou": txt_docs = "Mandou todos os documentos"
+elif contrato_social == "Já temos" and notas_fiscais == "Já temos": txt_docs = "Temos todos os documentos"
 else:
     partes = []
-    # Avaliando Contrato
     if contrato_social == "Faltando": partes.append("Falta o Contrato Social")
     elif contrato_social == "Enviou": partes.append("Enviou o Contrato Social")
     else: partes.append("Já temos o Contrato Social")
-    # Avaliando Notas
     if notas_fiscais == "Faltando": partes.append("Faltam as Notas Fiscais")
     elif notas_fiscais == "Enviou": partes.append("Enviou as Notas Fiscais")
     else: partes.append("Já temos as Notas Fiscais")
-    
     txt_docs = " e ".join(partes)
 
 # 2. Lógica das Pendências
-if tem_pendencia == "Não":
-    txt_pendencias = "Nenhuma pendência registrada"
+if tem_pendencia == "Não": txt_pendencias = "Nenhuma pendência registrada"
 else:
     plural = "pendência" if int(qtd_pendencias) == 1 else "pendências"
     txt_pendencias = f"{qtd_pendencias} {plural} de R$ {valor_pendencia}"
-    if detalhe_pendencia:
-        txt_pendencias += f" ({detalhe_pendencia})"
+    if detalhe_pendencia: txt_pendencias += f" ({detalhe_pendencia})"
 
 # 3. Espaçamento de linhas exato
 linhas_email = []
@@ -171,25 +190,22 @@ linhas_email.append(f"{tipo_cliente};")
 linhas_email.append(f"Compra de R$ {valor_compra};")
 linhas_email.append(f"{txt_docs};")
 
-# Se houver documentos excedentes, ganha uma linha própria
-if doc_excedentes.strip():
-    linhas_email.append(f"Documentos excedentes: {doc_excedentes};")
-
-# Se as notas existirem, a resposta da cobertura ganha uma linha própria
-if notas_fiscais in ["Enviou", "Já temos"]:
-    linhas_email.append(f"{cobertura_notas};")
+if doc_excedentes.strip(): linhas_email.append(f"Documentos excedentes: {doc_excedentes};")
+if notas_fiscais in ["Enviou", "Já temos"]: linhas_email.append(f"{cobertura_notas};")
 
 linhas_email.append(f"{txt_pendencias}.")
 linhas_email.append(f"Score de {score}.")
 linhas_email.append(f"Considerações finais: {consideracoes}")
 
-# O SEGREDO: Juntar todos os blocos com "\n\n" (Duas quebras de linha formam o espaço desejado)
+# Juntar blocos e Injetar Assinatura no Final
 email_texto = "\n\n".join(linhas_email)
+
+if assinatura_injetada.strip():
+    email_texto += f"\n\n\n{assinatura_injetada}"
 
 st.markdown("---")
 st.markdown("### 📋 E-mail Gerado")
 
-# Exibe o texto de forma limpa, botão nativo de copiar no canto
 st.code(email_texto, language='text')
 
 # 4. BOTÕES DE AÇÃO
