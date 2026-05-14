@@ -20,19 +20,21 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # ==========================================
-# BARRA LATERAL: INJETOR DE ASSINATURA
+# BARRA LATERAL: ASSINATURA
 # ==========================================
 with st.sidebar:
     st.markdown("### 🖋️ Assinatura Automática")
     st.markdown("*(O botão do Outlook apaga a assinatura nativa, então injetamos esta no lugar)*")
     
-    assinatura_padrao = """Atenciosamente,
+    assinatura_padrao = """Mantenho-me à disposição para quaisquer esclarecimentos adicionais que se fizerem necessários.
+
+Atenciosamente,
 
 Arthur Klein de Oliveira
-Administrativo e Financeiro
+Administrativo
 JNL Importadora e Distribuidora LTDA"""
     
-    assinatura_injetada = st.text_area("Editar Assinatura:", value=assinatura_padrao, height=200)
+    assinatura_injetada = st.text_area("Editar Assinatura:", value=assinatura_padrao, height=250)
 
 st.title("🧾 Análise de Crédito JNL")
 st.markdown("Preencha os dados e deixe-me calcular as chances e gerar o relatório.")
@@ -71,7 +73,7 @@ if notas_fiscais in ["Enviou", "Já temos"]:
         "As notas não cobrem o valor da compra"
     ])
 
-# Documentos extras
+# Documentos extras para casos em que mandam coisas diferentes
 doc_excedentes = st.text_input("Documentos Excedentes (Opcional)", placeholder="Ex: Enviou declaração de faturamento no lugar das notas")
 
 st.markdown("#### 🚨 Análise SPC / Serasa")
@@ -148,11 +150,11 @@ if doc_excedentes.strip(): chance += 5
 chance_final = int(max(0, min(100, chance)))
 
 st.markdown("---")
-st.markdown("### 📊 Termômetro de Aprovação")
+st.markdown("### 📊 Taxa de Aprovação")
 st.progress(chance_final / 100.0)
 
 if chance_final >= 75:
-    st.markdown(f"<p class='chance-alta'>🔥 Chance Alta: {chance_final}%</p>", unsafe_allow_html=True)
+    st.markdown(f"<p class='chance-alta'>✅ Chance Alta: {chance_final}%</p>", unsafe_allow_html=True)
 elif chance_final >= 40:
     st.markdown(f"<p class='chance-media'>⚠️ Chance Média: {chance_final}% (Requer atenção)</p>", unsafe_allow_html=True)
 else:
