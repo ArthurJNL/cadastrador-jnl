@@ -105,7 +105,7 @@ with col7:
     consideracoes = st.text_area("Considerações finais", placeholder="Ex: Cadastro aprovado...")
 
 # ==========================================
-# MOTOR (CHANCE DE APROVAÇÃO) - MÁXIMA PRECISÃO
+# MOTOR (CHANCE DE APROVAÇÃO)
 # ==========================================
 chance = 40 
 
@@ -199,11 +199,12 @@ linhas_email.append(f"{txt_pendencias}.")
 linhas_email.append(f"Score de {score}.")
 linhas_email.append(f"Considerações finais: {consideracoes}")
 
-# Juntar blocos e Injetar Assinatura no Final
+# O SEGREDO: Juntar todos os blocos com "\n\n" (Duas quebras de linha formam o espaço desejado)
 email_texto = "\n\n".join(linhas_email)
 
 if assinatura_injetada.strip():
-    email_texto += f"\n\n\n{assinatura_injetada}"
+    # O SEGREDO DO ESPAÇAMENTO DA ASSINATURA: Apenas "\n\n" (1 espaço visível), em vez de "\n\n\n"
+    email_texto += f"\n\n{assinatura_injetada}"
 
 st.markdown("---")
 st.markdown("### 📋 E-mail Gerado")
